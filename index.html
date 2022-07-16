@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0px;
+}
+.stateblock {
+  background-color: red;
+  color: white;
+  float: left;
+  text-align: center;
+  font-size: 5vw;
+  font-family: Arial;
+  width: 100%; 
+  border: 0px;
+  padding: 5px;
+  margin: 0px;
+}
+.sensors {
+  text-align: center;
+  margin: 0px;
+}
+.box {
+  border-style: solid;
+  width: 45%;
+  display: inline-block;
+  font-family: Arial; 
+}
+.title {
+  font-size: 4vw;
+}
+.temp {
+  font-size: 10vw;  
+  color: green;  
+}
+.hum {
+  font-size: 5vw;
+  color: blue;  
+}
+.bat {
+  font-size: 4vw;
+} 
+.fill {
+  display: inline-block;
+  width: 5%;
+}
+.br {
+  display: block;
+  width: 100%;
+  height: 10px;
+}
+@media screen and (max-width: 500px) {
+  .box {
+    width: 90%; 
+  }
+  .fill {
+    display: block;
+    height: 10px;
+  }
+}
+</style>
+<script>
+  function connected() { 
+    document.getElementById('state').textContent = 'CONNECTED'; 
+    document.getElementById('state').style.backgroundColor = 'green'; 
+  }
+  function disconnected() { 
+    document.getElementById('state').textContent = 'DISCONNECTED'; 
+    document.getElementById('state').style.backgroundColor = 'red'; 
+  }
+  function update(data) {
+    let obj;
+    try {
+       obj = JSON.parse(data);
+    } 
+    catch(err) {
+    }
+    if (typeof obj !== 'undefined' && obj.hasOwnProperty('DeviceAddr')) {
+      let addr = obj.DeviceAddr; 
+      if (!!document.getElementById(addr)) { //data block with sensor with such address already exists
+        document.getElementById('tem-'+obj.DeviceAddr).textContent = obj.Temperature;
+        document.getElementById('hum-'+obj.DeviceAddr).textContent = obj.Humidity;
+        document.getElementById('bat-'+obj.DeviceAddr).textContent = obj.BatteryP;
+
+      } else { //create new data block for non existing sensor
+        const sens = document.createElement("div");
+        sens.setAttribute("id",obj.DeviceAddr);
+        sens.setAttribute("class",'box');
+
+        const sens_tit = document.createElement("div");
+        sens_tit.setAttribute("id",'tit-'+obj.DeviceAddr);
+        sens_tit.setAttribute("class",'title');
+        sens_tit.textContent = obj.DeviceName + ' - ' + obj.DeviceAddr.substr(12,5).replace(':','').toUpperCase();
+        const sens_tem = document.createElement("div");
+        sens_tem.setAttribute("id",'tem-'+obj.DeviceAddr);
+        sens_tem.setAttribute("class",'temp');
+        sens_tem.textContent = obj.Temperature;
+        const sens_hum = document.createElement("div");
+        sens_hum.setAttribute("id",'hum-'+obj.DeviceAddr);
+        sens_hum.setAttribute("class",'hum');
+        sens_hum.textContent = obj.Humidity;
+        const sens_bat = document.createElement("div");
+        sens_bat.setAttribute("id",'bat-'+obj.DeviceAddr);
+        sens_bat.setAttribute("class",'bat');
+        sens_bat.textContent = obj.BatteryP;
+
+        const sens_br = document.createElement("br");
+        const sens_div = document.createElement("div");
+        sens_div.setAttribute("class",'fill');
+
+	sens.appendChild(sens_tit);
+	sens.appendChild(sens_tem);
+	sens.appendChild(sens_hum);
+	sens.appendChild(sens_bat);
+
+        document.getElementById('sensors').appendChild(sens);
+        
+        let elements = document.getElementById('sensors').childElementCount;
+        if (((elements+4)%4) === 1) {
+          document.getElementById('sensors').appendChild(sens_div);
+        } else {
+          document.getElementById('sensors').appendChild(sens_br);
+        }
+      }
+    }
+  }
+  // setup websocket with callbacks
+  var ws = new WebSocket('ws://'+location.host+'/ws/');
+  ws.onopen = function()         { connected(); };
+  ws.onclose = function()        { dosconnected(); };
+  ws.onmessage = function(event) { update(event.data); };
+</script>
+</head>
+<body>
+<div id="state" class="stateblock">DISCONNECTED</div>
+<br>
+<div id="sensors" class="sensors"></div>
+</body>
+</html>

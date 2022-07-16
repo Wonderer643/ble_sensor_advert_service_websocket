@@ -1,0 +1,18 @@
+[Unit]
+Description=BLE Scanner to MQTT GW
+After=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+LimitCORE=infinity
+ExecStart=/usr/bin/ble_mqtt_gw_v2.py
+User=pi
+Group=pi
+PermissionsStartOnly=true
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="BLE_DEVICE=0"
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target
